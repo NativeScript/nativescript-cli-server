@@ -1,13 +1,18 @@
 'use strict';
 
 const DeviceEmitter = require('./src/device-emitter');
+const ServerManager = require('./src/server-manager');
 const DeviceManager = require('./src/device-manager');
-const deviceEmitterInstance = new DeviceEmitter();
-const deviceManager = new DeviceManager(deviceEmitterInstance);
+const serverManagerInstance = new ServerManager();
+const deviceEmitterInstance = new DeviceEmitter(serverManagerInstance);
+const deviceManager = new DeviceManager(serverManagerInstance);
+const EnvironmentManager = require('./src/environment-manager');
+const environmentManager = new EnvironmentManager(serverManagerInstance);
 
 module.exports = {
-    getServerAddress: deviceEmitterInstance.getServerAddress.bind(deviceEmitterInstance),
-    killServer: deviceEmitterInstance.killServer.bind(deviceEmitterInstance),
+    getServerAddress: serverManagerInstance.getServerAddress.bind(serverManagerInstance),
+    killServer: serverManagerInstance.killServer.bind(serverManagerInstance),
     deviceEmitter: deviceEmitterInstance,
+    getEnvironmentStatus: environmentManager.getEnvironmentStatus.bind(environmentManager),
     refresh: deviceManager.refresh.bind(deviceManager)
 }

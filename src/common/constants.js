@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const packageName = "cloud-device-emulator";
+const packageName = "nativescript-cli-server";
 const osenv = require('osenv');
 
 const winLogFilesLocation = path.join(process.env.APPDATA || "", packageName);

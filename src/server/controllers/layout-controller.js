@@ -1,6 +1,6 @@
 'use strict';
 
-const constants = require('../common/constants');
+const constants = require('../../common/constants');
 const uuid = require('uuid');
 
 module.exports = {

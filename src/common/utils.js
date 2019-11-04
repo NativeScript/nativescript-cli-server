@@ -1,6 +1,6 @@
 'use strict';
 
-const constants = require('../common/constants');
+const constants = require('./constants');
 
 module.exports = {
     successResponse: res => {

@@ -1,7 +1,7 @@
 'use strict';
 
-const constants = require('../common/constants');
-const utils = require('../common/utils');
+const constants = require('../../common/constants');
+const utils = require('../../common/utils');
 
 module.exports = {
     rotateLeft: (req, res) => {

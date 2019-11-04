@@ -1,5 +1,3 @@
-'use strict';
-
 function log(...args) {
     args.unshift(new Date());
     return console.log.apply(console, args);

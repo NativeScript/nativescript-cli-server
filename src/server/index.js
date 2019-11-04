@@ -4,10 +4,10 @@ const fs = require('fs');
 const http = require('http');
 const path = require('path');
 
-const constants = require('./common/constants');
-const utils = require('./common/utils');
+const constants = require('../common/constants');
+const utils = require('../common/utils');
 const _ = require('lodash');
-const logger = require('./logger');
+const logger = require('../logger');
 
 module.exports = {
     start: port => {
