@@ -7,6 +7,7 @@ let serverManagerInstance = null;
 
 class IosDeviceLibManager extends EventEmitter {
     constructor(onDeviceFound, onDeviceUpdated, onDeviceLost) {
+        super();
         serverManagerInstance.getServerAddress().then(serverInfo => {
             this.client = socketClient(`http://${serverInfo.host}:${serverInfo.port}`);
             this.client.on(constants.eventNames.deviceFound, onDeviceFound);
@@ -70,16 +71,16 @@ class IosDeviceLibManager extends EventEmitter {
         this.client.on(event, listener);
     };
 
-    _sendRequest(methodName, arguments) {
+    _sendRequest(methodName, args) {
         return new Promise((resolve, reject) => {
             serverManagerInstance.getServerAddress().then(serverInfo => {
                 const body = JSON.stringify({
-                    methodName, arguments
+                    methodName, args
                 });
                 const options = {
                     hostname: serverInfo.host,
                     port: serverInfo.port,
-                    path: this._getUrl(deviceInfo, urlPath),
+                    path: constants.server.iosDeviceCall,
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

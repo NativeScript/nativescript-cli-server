@@ -33,7 +33,7 @@ module.exports = {
 
         const errors = req.validationErrors();
         if (errors) {
-            return res.render(constants.views.error);
+            return res.status(constants.responseCode.badRequest).json(errors);
         }
 
         const methodName = req.params.methodName;

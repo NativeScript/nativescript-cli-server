@@ -19,5 +19,6 @@ module.exports = app => {
     //API
     app.get(constants.server.healthUrlPath, routeMiddware.healthcheckMiddleware);
     app.get(constants.server.devicesUrlPath, controllers.simulator.getConnectedDevice);
+    app.post(constants.server.iosDeviceCall, controllers.iosDevices.callDeviceLib);
     // app.get(constants.server.healthUrlPath, controllers.environment.getStatus);
 };
