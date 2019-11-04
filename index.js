@@ -16,6 +16,6 @@ module.exports = {
     killServer: serverManagerInstance.killServer.bind(serverManagerInstance),
     deviceEmitter: deviceEmitterInstance,
     getEnvironmentStatus: environmentManager.getEnvironmentStatus.bind(environmentManager),
-    IosDeviceLib: iosDeviceLibManager,
+    IOSDeviceLib: iosDeviceLibManager,
     refresh: deviceManager.refresh.bind(deviceManager)
 }
