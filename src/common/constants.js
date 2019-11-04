@@ -66,7 +66,8 @@ module.exports = {
         long: 'long',
         publicKey: 'publicKey',
         device: 'device',
-        deviceIdentifier: 'deviceIdentifier'
+        deviceIdentifier: 'deviceIdentifier',
+        methodName: 'methodName'
     },
     views: {
         simulator: 'simulator',
@@ -93,6 +94,8 @@ module.exports = {
         deviceFound: "deviceFound",
         deviceLost: "deviceLost",
         deviceEmitter: "deviceEmitter",
+        deviceUpdated: "deviceUpdated",
+        deviceLogData: "deviceLogData",
         data: "data",
         error: "error",
         end: "end"

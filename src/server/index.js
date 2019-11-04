@@ -6,6 +6,7 @@ const path = require('path');
 
 const constants = require('../common/constants');
 const utils = require('../common/utils');
+const serverUtils = require('./utils');
 const _ = require('lodash');
 const logger = require('../logger');
 
@@ -16,6 +17,7 @@ module.exports = {
             const app = express();
             const server = require('http').createServer(app);
             const socket = require('socket.io')(server);
+            serverUtils.setServerSocket(socket);
 
             let socketConnections = {};
             let deviceEmitterInstanceClients = {};
