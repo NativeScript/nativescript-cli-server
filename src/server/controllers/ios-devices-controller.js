@@ -5,18 +5,30 @@ const uuid = require('uuid');
 const iosDeviceLibModule = require("ios-device-lib").IOSDeviceLib;
 const utils = require('../utils');
 
+const currentDevices = [];
 function deviceFoundCallback(deviceInfo) {
     const socket = utils.getServerSocket();
+    currentDevices.push(deviceInfo);
     socket.emit('deviceFound', deviceInfo);
 }
 
-function deviceUpdatedCallback() {
+function deviceUpdatedCallback(deviceInfo) {
     const socket = utils.getServerSocket();
+    const device = currentDevices.find(d => d.deviceId === deviceInfo.deviceId);
+    const index = device && currentDevices.indexOf(device);
+    if (index !== null && index > -1) {
+        currentDevices.splice(index, 1, deviceInfo);
+    }
+
     socket.emit('deviceUpdated', deviceInfo);
 }
 
-function deviceLostCallback() {
+function deviceLostCallback(deviceInfo) {
     const socket = utils.getServerSocket();
+    const index = currentDevices.indexOf(deviceInfo);
+    if (index > -1) {
+        currentDevices.splice(index, 1);
+    }
     socket.emit('deviceLost', deviceInfo);
 }
 
@@ -28,28 +40,41 @@ deviceLib.on('deviceLogData', (logData) => {
 });
 
 module.exports = {
-    callDeviceLib: (req, res) => {
-        req.checkParams(constants.params.methodName, constants.errorMessages.requiredParameter).notEmpty();
+    currentDevices: (req, res) => {
+        res.status(constants.responseCode.ok).json(currentDevices);
+    },
+    callDeviceLib: async (req, res) => {
+        // req.checkParams(constants.params.methodName, constants.errorMessages.requiredParameter).notEmpty();
 
-        const errors = req.validationErrors();
-        if (errors) {
-            return res.status(constants.responseCode.badRequest).json(errors);
-        }
+        // const errors = req.validationErrors();
+        // if (errors) {
+        //     return res.status(constants.responseCode.badRequest).json(errors);
+        // }
 
-        const methodName = req.params.methodName;
-        let result = null;
+        const methodName = req.body.methodName;
+        let promises = null;
+        const result = [];
+        const errors = [];
         try {
-            result = deviceLib[methodName].apply(this, req.params.arguments || []);
+            promises = deviceLib[methodName].apply(deviceLib, req.body.args || []);
         } catch (err) {
-            res.status(constants.responseCode.badRequest).json(err);
+            res.status(constants.responseCode.ok).json({ result: [], errors: [`Error while executing ios device operation: ${err.message} with code: ${err.code}`] });
         }
 
-        if (result && typeof result.then === 'function') {
-            result
-                .then(libResult => res.status(constants.responseCode.ok).json(libResult))
-                .catch(libError => res.status(constants.responseCode.badRequest).json(libError));
+        if (promises && Array.isArray(promises)) {
+            for (const promise of promises) {
+                try {
+                    result.push(await promise);
+                } catch (err) {
+                    errors.push(`Error while executing ios device operation: ${err.message} with code: ${err.code}`);
+                }
+            }
+        }
+
+        if (result.length || errors.length) {
+            res.status(constants.responseCode.ok).json({ result, errors });
         } else {
-            res.status(constants.responseCode.ok).json(result);
+            res.status(constants.responseCode.ok).json({ result: promises });
         }
     }
 };

@@ -88,6 +88,7 @@ module.exports = {
         host: 'localhost',
         healthUrlPath: '/api/health',
         devicesUrlPath: '/api/simulators/devices',
+        iosConnectedDevices: '/api/ios-connected-devices',
         iosDeviceCall: '/api/ios-device-call',
         quitPath: '/api/quit'
     },

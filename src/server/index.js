@@ -51,7 +51,7 @@ module.exports = {
             });
 
             server.listen(port, () => {
-                logger.log("Server stared listening");
+                logger.log("Server stared listening on port " + server.address().port);
                 resolve(server.address().port);
             });
 

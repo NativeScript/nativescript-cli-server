@@ -13,6 +13,13 @@ class IosDeviceLibManager extends EventEmitter {
             this.client.on(constants.eventNames.deviceFound, onDeviceFound);
             this.client.on(constants.eventNames.deviceLost, onDeviceLost);
             this.client.on(constants.eventNames.deviceUpdated, onDeviceUpdated);
+            this._getCurrentDevices(serverInfo.host, serverInfo.port).then(devices => {
+                if (devices && devices.length) {
+                    devices.forEach(device => {
+                        onDeviceFound(device);
+                    });
+                }
+            }).catch(() => {});
         });
     }
 
@@ -69,10 +76,39 @@ class IosDeviceLibManager extends EventEmitter {
 
     on(event, listener) {
         this.client.on(event, listener);
-    };
+    }
+
+    _getCurrentDevices(host, port) {
+        return new Promise((resolve, reject) => {
+            const options = {
+                hostname: host,
+                port: port,
+                path: constants.server.iosConnectedDevices,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            const req = http.request(options, res => {
+                let rawData = '';
+                res.on(constants.eventNames.data, chunk => { rawData += chunk; });
+                res.on(constants.eventNames.end, () => {
+                    const responseBody = rawData && JSON.parse(rawData);
+
+                    res.statusCode === constants.responseCode.ok ? resolve(responseBody) : reject(responseBody);
+                });
+            });
+
+            req.on(constants.eventNames.error, err => {
+                reject(err);
+            });
+
+            req.end();
+        });
+    }
 
     _sendRequest(methodName, args) {
-        return new Promise((resolve, reject) => {
+        return [new Promise((resolve, reject) => {
             serverManagerInstance.getServerAddress().then(serverInfo => {
                 const body = JSON.stringify({
                     methodName, args
@@ -87,12 +123,13 @@ class IosDeviceLibManager extends EventEmitter {
                         'Content-Length': body.length
                     }
                 };
-
                 const req = http.request(options, res => {
                     let rawData = '';
                     res.on(constants.eventNames.data, chunk => { rawData += chunk; });
                     res.on(constants.eventNames.end, () => {
-                        res.statusCode === constants.responseCode.ok ? resolve(JSON.parse(rawData)) : reject(JSON.parse(rawData));
+                        const responseBody = rawData && JSON.parse(rawData);
+
+                        res.statusCode === constants.responseCode.ok ? resolve(responseBody) : reject(responseBody);
                     });
                 });
 
@@ -103,7 +140,7 @@ class IosDeviceLibManager extends EventEmitter {
                 req.write(body);
                 req.end();
             });
-        });
+        })];
     }
 }
 
