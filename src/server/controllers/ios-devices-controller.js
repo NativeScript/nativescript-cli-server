@@ -1,11 +1,11 @@
 'use strict';
 
 const constants = require('../../common/constants');
-const uuid = require('uuid');
 const iosDeviceLibModule = require("ios-device-lib").IOSDeviceLib;
 const utils = require('../utils');
 
 const currentDevices = [];
+
 function deviceFoundCallback(deviceInfo) {
     const socket = utils.getServerSocket();
     currentDevices.push(deviceInfo);
@@ -17,7 +17,7 @@ function deviceUpdatedCallback(deviceInfo) {
     const device = currentDevices.find(d => d.deviceId === deviceInfo.deviceId);
     const index = device && currentDevices.indexOf(device);
     if (index !== null && index > -1) {
-        currentDevices.splice(index, 1, deviceInfo);
+        currentDevices[index] = deviceInfo;
     }
 
     socket.emit('deviceUpdated', deviceInfo);
@@ -25,8 +25,9 @@ function deviceUpdatedCallback(deviceInfo) {
 
 function deviceLostCallback(deviceInfo) {
     const socket = utils.getServerSocket();
-    const index = currentDevices.indexOf(deviceInfo);
-    if (index > -1) {
+    const device = currentDevices.find(d => d.deviceId === deviceInfo.deviceId);
+    const index = device && currentDevices.indexOf(device);
+    if (index !== null && index > -1) {
         currentDevices.splice(index, 1);
     }
     socket.emit('deviceLost', deviceInfo);
@@ -41,7 +42,7 @@ deviceLib.on('deviceLogData', (logData) => {
 
 module.exports = {
     currentDevices: (req, res) => {
-        res.status(constants.responseCode.ok).json(currentDevices);
+        return res.status(constants.responseCode.ok).json(currentDevices);
     },
     callDeviceLib: async (req, res) => {
         // req.checkParams(constants.params.methodName, constants.errorMessages.requiredParameter).notEmpty();
@@ -58,7 +59,7 @@ module.exports = {
         try {
             promises = deviceLib[methodName].apply(deviceLib, req.body.args || []);
         } catch (err) {
-            res.status(constants.responseCode.ok).json({ result: [], errors: [`Error while executing ios device operation: ${err.message} with code: ${err.code}`] });
+            return res.status(constants.responseCode.ok).json({ result: [], errors: [`Error while executing ios device operation: ${err.message} with code: ${err.code}`] });
         }
 
         if (promises && Array.isArray(promises)) {
@@ -72,9 +73,9 @@ module.exports = {
         }
 
         if (result.length || errors.length) {
-            res.status(constants.responseCode.ok).json({ result, errors });
+            return res.status(constants.responseCode.ok).json({ result, errors });
         } else {
-            res.status(constants.responseCode.ok).json({ result: promises });
+            return res.status(constants.responseCode.ok).json({ result: promises });
         }
     }
 };
