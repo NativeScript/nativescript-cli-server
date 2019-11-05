@@ -14,12 +14,8 @@ class IosDeviceLibManager extends EventEmitter {
             this.client.on(constants.eventNames.deviceLost, onDeviceLost);
             this.client.on(constants.eventNames.deviceUpdated, onDeviceUpdated);
             this._getCurrentDevices(serverInfo.host, serverInfo.port).then(devices => {
-                if (devices && devices.length) {
-                    devices.forEach(device => {
-                        onDeviceFound(device);
-                    });
-                }
-            }).catch(() => {});
+                onDeviceFound(devices);
+            }).catch(() => { });
         });
     }
 

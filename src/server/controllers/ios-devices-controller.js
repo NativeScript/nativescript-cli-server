@@ -5,11 +5,13 @@ const iosDeviceLibModule = require("ios-device-lib").IOSDeviceLib;
 const utils = require('../utils');
 
 const currentDevices = [];
-
+let skipDeviceEvents = true;
 function deviceFoundCallback(deviceInfo) {
     const socket = utils.getServerSocket();
     currentDevices.push(deviceInfo);
-    socket.emit('deviceFound', deviceInfo);
+    if (!skipDeviceEvents) {
+        socket.emit('deviceFound', deviceInfo);
+    }
 }
 
 function deviceUpdatedCallback(deviceInfo) {
@@ -20,7 +22,9 @@ function deviceUpdatedCallback(deviceInfo) {
         currentDevices[index] = deviceInfo;
     }
 
-    socket.emit('deviceUpdated', deviceInfo);
+    if (!skipDeviceEvents) {
+        socket.emit('deviceUpdated', deviceInfo);
+    }
 }
 
 function deviceLostCallback(deviceInfo) {
@@ -30,24 +34,55 @@ function deviceLostCallback(deviceInfo) {
     if (index !== null && index > -1) {
         currentDevices.splice(index, 1);
     }
-    socket.emit('deviceLost', deviceInfo);
+
+    if (!skipDeviceEvents) {
+        socket.emit('deviceLost', deviceInfo);
+    }
 }
 
 const deviceLib = new iosDeviceLibModule(deviceFoundCallback, deviceUpdatedCallback, deviceLostCallback);
+const lookingForDevicesPromise = new Promise((resolve) => setTimeout(() => {
+    skipDeviceEvents = false;
+    resolve();
+}, 6000));
 
 deviceLib.on('deviceLogData', (logData) => {
     const socket = utils.getServerSocket();
     socket.emit('deviceLogData', logData);
 });
 
+const callLibMethod = async (methodName, args) => {
+    let promises = null;
+    const result = [];
+    const errors = [];
+    try {
+        promises = deviceLib[methodName].apply(deviceLib, args || []);
+    } catch (err) {
+        return res.status(constants.responseCode.ok).json({ result: [], errors: [`Error while executing ios device operation: ${err.message} with code: ${err.code}`] });
+    }
+
+    if (promises && Array.isArray(promises)) {
+        for (const promise of promises) {
+            try {
+                result.push(await promise);
+            } catch (err) {
+                errors.push(`Error while executing ios device operation: ${err.message} with code: ${err.code}`);
+            }
+        }
+    }
+
+    return { result, errors };
+}
+
 module.exports = {
-    currentDevices: (req, res) => {
+    currentDevices: async (req, res) => {
+        await lookingForDevicesPromise;
         return res.status(constants.responseCode.ok).json(currentDevices);
     },
     callDeviceLib: async (req, res) => {
         const methodName = req.body.methodName;
         const args = req.body.args;
-        const { result, errors } = await this.callLibMethod(methodName, args);
+        const { result, errors } = await callLibMethod(methodName, args);
 
         if (result.length || errors.length) {
             return res.status(constants.responseCode.ok).json({ result, errors });
@@ -55,26 +90,5 @@ module.exports = {
             return res.status(constants.responseCode.ok).json({ result: promises });
         }
     },
-    callLibMethod: async (methodName, args) => {
-        let promises = null;
-        const result = [];
-        const errors = [];
-        try {
-            promises = deviceLib[methodName].apply(deviceLib, args || []);
-        } catch (err) {
-            return res.status(constants.responseCode.ok).json({ result: [], errors: [`Error while executing ios device operation: ${err.message} with code: ${err.code}`] });
-        }
-
-        if (promises && Array.isArray(promises)) {
-            for (const promise of promises) {
-                try {
-                    result.push(await promise);
-                } catch (err) {
-                    errors.push(`Error while executing ios device operation: ${err.message} with code: ${err.code}`);
-                }
-            }
-        }
-
-        return { result, errors };
-    }
+    callLibMethod: callLibMethod
 };
