@@ -49,7 +49,7 @@ class ServerManager {
                             });
                         });
                     }
-                }, 400);
+                }, 10);
             });
 
             instance = this;
