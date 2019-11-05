@@ -24,7 +24,7 @@ class IosDeviceLibManager extends EventEmitter {
     }
 
     dispose(signal) {
-        this._sendRequest('dispose', [signal]);
+        // this._sendRequest('dispose', [signal]);
         if (this.client) {
             this.client.close();
         }

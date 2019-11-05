@@ -45,19 +45,22 @@ module.exports = {
         return res.status(constants.responseCode.ok).json(currentDevices);
     },
     callDeviceLib: async (req, res) => {
-        // req.checkParams(constants.params.methodName, constants.errorMessages.requiredParameter).notEmpty();
-
-        // const errors = req.validationErrors();
-        // if (errors) {
-        //     return res.status(constants.responseCode.badRequest).json(errors);
-        // }
-
         const methodName = req.body.methodName;
+        const args = req.body.args;
+        const { result, errors } = await this.callLibMethod(methodName, args);
+
+        if (result.length || errors.length) {
+            return res.status(constants.responseCode.ok).json({ result, errors });
+        } else {
+            return res.status(constants.responseCode.ok).json({ result: promises });
+        }
+    },
+    callLibMethod: async (methodName, args) => {
         let promises = null;
         const result = [];
         const errors = [];
         try {
-            promises = deviceLib[methodName].apply(deviceLib, req.body.args || []);
+            promises = deviceLib[methodName].apply(deviceLib, args || []);
         } catch (err) {
             return res.status(constants.responseCode.ok).json({ result: [], errors: [`Error while executing ios device operation: ${err.message} with code: ${err.code}`] });
         }
@@ -72,10 +75,6 @@ module.exports = {
             }
         }
 
-        if (result.length || errors.length) {
-            return res.status(constants.responseCode.ok).json({ result, errors });
-        } else {
-            return res.status(constants.responseCode.ok).json({ result: promises });
-        }
+        return { result, errors };
     }
 };

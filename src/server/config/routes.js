@@ -7,7 +7,8 @@ const utils = require('../../utils');
 const fs = require('fs');
 
 module.exports = app => {
-    app.get(constants.server.quitPath, (req, res) => {
+    app.get(constants.server.quitPath, async (req, res) => {
+        await controllers.iosDevices.callLibMethod('dispose',[]);
         res.status(constants.responseCode.ok)
             .json({ status: constants.statusMassages.OK });
 
