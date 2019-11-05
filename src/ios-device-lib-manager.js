@@ -8,12 +8,12 @@ let serverManagerInstance = null;
 class IosDeviceLibManager extends EventEmitter {
     constructor(onDeviceFound, onDeviceUpdated, onDeviceLost) {
         super();
-        serverManagerInstance.getServerAddress().then(serverInfo => {
+        this.constructorPromise = serverManagerInstance.getServerAddress().then(serverInfo => {
             this.client = socketClient(`http://${serverInfo.host}:${serverInfo.port}`);
             this.client.on(constants.eventNames.deviceFound, onDeviceFound);
             this.client.on(constants.eventNames.deviceLost, onDeviceLost);
             this.client.on(constants.eventNames.deviceUpdated, onDeviceUpdated);
-            this._getCurrentDevices(serverInfo.host, serverInfo.port).then(devices => {
+            return this._getCurrentDevices(serverInfo.host, serverInfo.port).then(devices => {
                 onDeviceFound(devices);
             }).catch(() => { });
         });
@@ -21,9 +21,13 @@ class IosDeviceLibManager extends EventEmitter {
 
     dispose(signal) {
         // this._sendRequest('dispose', [signal]);
-        if (this.client) {
-            this.client.close();
-        }
+        this.constructorPromise.then(() => {
+            if (this.client) {
+                this.client.removeAllListeners();
+                this.client.close();
+                this.client = null;
+            }
+        });
     }
 
     install(ipaPath, deviceIdentifiers) {
