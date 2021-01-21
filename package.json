@@ -17,7 +17,7 @@
     "ios-device-lib": "0.7.3",
     "lodash": "4.17.15",
     "osenv": "0.1.5",
-    "socket.io": "2.3.0",
+    "socket.io": "2.4.0",
     "socket.io-client": "2.3.0",
     "uuid": "3.3.3"
   },
